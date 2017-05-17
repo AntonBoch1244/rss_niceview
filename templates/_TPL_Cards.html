@@ -1,0 +1,23 @@
+<div class="news_card">
+	<table>
+		<tr>
+			<td>
+				<table>
+					<tr>
+						<td class="news-headline">
+							{% rss_title %}
+						</td>
+					</tr>
+					<tr>
+						<td class="news-textline">
+							{% rss_description %}
+						</td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<img src="{% rss_enclosure_url %}"/>
+			</td>
+		</tr>
+	</table>
+</div>
