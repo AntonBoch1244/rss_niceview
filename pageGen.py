@@ -38,49 +38,62 @@ RSS_DATA = input_data.read()
 ch = re.findall(r".*?<channel>(?P<channel>.*?)</channel>.*", RSS_DATA, re.DOTALL)[0]
 _title = re.findall(r".*?<title>(?P<title>.*?)</title>(?P<aftT>.*?)", ch, re.DOTALL)
 RSS_title = _title[0][0]
-resgener = "<!DOCTYPE html>" \
-           "<html>" \
-           "<head>" \
-           "<title>" + RSS_title + "</title>" \
-           "<style>" \
-               "body { " \
-                   "margin: 0; " \
-                   "background: #AAA; " \
-               "} " \
-               ".news_card { " \
-                   "margin: 50px 25px; " \
-                   "border: 1px; " \
-                   "border-radius: 3px; " \
-                   "border-style: solid; " \
-                   "border-color: rgba(127, 127, 127, 0.75); " \
-                   "background-color: #dfdfdf; " \
-                   "box-shadow: 0px 0px 20px 10px rgba(128, 128, 128, 40); " \
-               "} " \
-               ".news-headline { " \
-                   "font-family: monospace; " \
-                   "font-size: 3em; " \
-                   "padding-left: 20px; " \
-               "} " \
-               ".news-textline { " \
-                   "font-family: monospace; " \
-                   "font-size: 2.5em; " \
-                   "padding-left: 20px; " \
-               "} " \
-               "img { " \
-                   "height: calc(100% - 80px); " \
-                   "width: calc(100% - 20px); " \
-                   "box-shadow: 0px 0px 8px 2px rgba(128, 128, 128, 40); " \
-               "}" \
-           "</style>" \
-           "<meta charset=\"" + XML_ENCODING + "\"/>" \
-           "</head>" \
-           "<body>"
+resgener = "<!DOCTYPE html>"\
+           "<html>"\
+           "<head>"\
+           "<title>" + RSS_title + "</title>"\
+                                   "<style>"\
+                                   "body { "\
+                                   "margin: 0; "\
+                                   "background: #AAA; "\
+                                   "} "\
+                                   ".news_card { "\
+                                   "margin: 50px 25px; "\
+                                   "border: 1px; "\
+                                   "border-radius: 3px; "\
+                                   "border-style: solid; "\
+                                   "border-color: rgba(127, 127, 127, 0.75); "\
+                                   "background-color: #dfdfdf; "\
+                                   "box-shadow: 0px 0px 20px 10px rgba(128, 128, 128, 40); "\
+                                   "} "\
+                                   ".news-headline { "\
+                                   "font-family: monospace; "\
+                                   "font-size: 3em; "\
+                                   "padding-left: 20px; "\
+                                   "} "\
+                                   ".news-textline { "\
+                                   "font-family: monospace; "\
+                                   "font-size: 2.5em; "\
+                                   "padding-left: 20px; "\
+                                   "} "\
+                                   "img { "\
+                                   "height: calc(100% - 80px); "\
+                                   "width: calc(100% - 20px); "\
+                                   "box-shadow: 0px 0px 8px 2px rgba(128, 128, 128, 40); "\
+                                   "}"\
+                                   "</style>"\
+                                   "<meta charset=\"" + XML_ENCODING + "\"/>"\
+                                                                       "</head>"\
+                                                                       "<body>"
 _items = re.findall(r"<item>(?P<title>.*?)</item>", ch, re.DOTALL)
 for item in _items:
 	rss_title = re.findall(r".*<title>(?P<this>.*?)</title>(?P<secondLy>.*)", item, re.DOTALL)
 	rss_link = re.findall(r".*<link>(?P<this>.*?)</link>(?P<secondLy>.*)", rss_title[0][1], re.DOTALL)
-	resgener += "<div class=\"news_card\"><table><tr><td><table><tr><td class=\"news-headline\"><a href=\"" + rss_link[0][0] + "\">" + rss_title[0][0] + "</a></td></tr><tr><td class=\"news-textline\">"
-	rss_description = re.findall(r".*<description>(?P<this>.*?)</description>(?P<secondLy>.*)", rss_link[0][1], re.DOTALL)
+	resgener +=\
+		"<div class=\"news_card\">"\
+		"<table>"\
+		"<tr>"\
+		"<td>"\
+		"<table>"\
+		"<tr>"\
+		"<td class=\"news-headline\">"\
+		"<a href=\"" + rss_link[0][0] + "\">" + rss_title[0][0] + "</a>"\
+		                                                          "</td>"\
+		                                                          "</tr>"\
+		                                                          "<tr>"\
+		                                                          "<td class=\"news-textline\">"
+	rss_description = re.findall(r".*<description>(?P<this>.*?)</description>(?P<secondLy>.*)", rss_link[0][1],
+	                             re.DOTALL)
 	try:
 		normalize = re.findall(r"<!\[CDATA\[(?P<CDATA>.*?)\]\]>", rss_description[0][0], re.DOTALL)[0]
 	except:
@@ -94,8 +107,11 @@ for item in _items:
 		resgener += "<td style=\" width:40%; \"><img src=\"" + rss_enclosure_url[0] + "\"/></td>"
 	except:
 		pass
-	resgener += "</tr></table></div>"
-resgener += "</body></html>"
+	resgener += "</tr>"\
+	            "</table>"\
+	            "</div>"
+resgener += "</body>"\
+            "</html>"
 
 result.write(resgener)
 result.close()
