@@ -34,6 +34,7 @@ import BaseHTTPServer
 XML_DATA = input_data.readline()
 XML_ENCODING = re.findall(r".*?encoding=\"(?P<encode>.*?)\".*", XML_DATA)[0]
 
+input_data.seek(0)
 RSS_DATA = input_data.read()
 
 
