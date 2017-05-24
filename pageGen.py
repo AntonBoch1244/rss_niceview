@@ -35,7 +35,13 @@ XML_DATA = input_data.readline()
 XML_ENCODING = re.findall(r".*?encoding=\"(?P<encode>.*?)\".*", XML_DATA)[0]
 
 RSS_DATA = input_data.read()
-ch = re.findall(r".*?<channel>(?P<channel>.*?)</channel>.*", RSS_DATA, re.DOTALL)[0]
+
+
+def CDATAUnpack(some_data):
+	return re.findall(r"<!\[CDATA\[(?P<CDATA>.*?)\]\]>", some_data, re.DOTALL)[0]
+
+
+ch = re.findall(r".*?<channel.*?>(?P<channel>.*?)</channel>.*", RSS_DATA, re.DOTALL)[0]
 _title = re.findall(r".*?<title>(?P<title>.*?)</title>(?P<aftT>.*?)", ch, re.DOTALL)
 RSS_title = _title[0][0]
 resgener = "<!DOCTYPE html>"\
@@ -46,6 +52,7 @@ resgener = "<!DOCTYPE html>"\
                                    "body { "\
                                    "margin: 0; "\
                                    "background: #AAA; "\
+                                   "filter: sepia(100%) invert(100%); "\
                                    "} "\
                                    ".news_card { "\
                                    "margin: 50px 25px; "\
@@ -77,8 +84,12 @@ resgener = "<!DOCTYPE html>"\
                                                                        "<body>"
 _items = re.findall(r"<item>(?P<title>.*?)</item>", ch, re.DOTALL)
 for item in _items:
-	rss_title = re.findall(r".*<title>(?P<this>.*?)</title>(?P<secondLy>.*)", item, re.DOTALL)
-	rss_link = re.findall(r".*<link>(?P<this>.*?)</link>(?P<secondLy>.*)", rss_title[0][1], re.DOTALL)
+	rss_title = re.findall(r".*<title>(?P<this>.*?)</title>.*", item, re.DOTALL)
+	try:
+		ttl = CDATAUnpack(rss_title[0])
+	except:
+		ttl = rss_title[0]
+	rss_link = re.findall(r".*<link>(?P<this>.*?)</link>.*", item, re.DOTALL)
 	resgener +=\
 		"<div class=\"news_card\">"\
 		"<table>"\
@@ -87,23 +98,24 @@ for item in _items:
 		"<table>"\
 		"<tr>"\
 		"<td class=\"news-headline\">"\
-		"<a href=\"" + rss_link[0][0] + "\">" + rss_title[0][0] + "</a>"\
-		                                                          "</td>"\
-		                                                          "</tr>"\
-		                                                          "<tr>"\
-		                                                          "<td class=\"news-textline\">"
-	rss_description = re.findall(r".*<description>(?P<this>.*?)</description>(?P<secondLy>.*)", rss_link[0][1],
+		"<a href=\"" + rss_link[0] + "\">" + ttl + "</a>"\
+		                                           "</td>"\
+		                                           "</tr>"\
+		                                           "<tr>"\
+		                                           "<td class=\"news-textline\">"
+	rss_description = re.findall(r".*<description>(?P<this>.*?)</description>.*",
+	                             item,
 	                             re.DOTALL)
 	try:
-		normalize = re.findall(r"<!\[CDATA\[(?P<CDATA>.*?)\]\]>", rss_description[0][0], re.DOTALL)[0]
+		normalize = CDATAUnpack(rss_description[0])
 	except:
-		normalize = rss_description[0][0]
+		normalize = rss_description[0]
 	for nop in range(0, 255, 1):
 		normalize = re.sub("&lt;", "<", normalize, re.DOTALL)
 		normalize = re.sub("&gt;", ">", normalize, re.DOTALL)
 	resgener += normalize + "</td></tr></table></td>"
 	try:
-		rss_enclosure_url = re.findall(r"<enclosure url=\"(?P<url>.*?) .*?/>", rss_description[0][1], re.DOTALL)
+		rss_enclosure_url = re.findall(r"<enclosure url=\"(?P<url>.*?) .*?/>", item, re.DOTALL)
 		resgener += "<td style=\" width:40%; \"><img src=\"" + rss_enclosure_url[0] + "\"/></td>"
 	except:
 		pass
