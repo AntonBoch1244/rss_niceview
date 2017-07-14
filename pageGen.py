@@ -18,18 +18,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Generation Templates for now useless SHOWED STRUCT OF PAGE [WIP!] TODO: MAKE NOT USELESS
 cards = file("templates/_TPL_Cards.html", "r", -1)
 mainPage = file("templates/_TPL_Main.html", "r", -1)
+styleSheet = file("templates/assets/_TPL_NewsStyle.css", "r", -1)
+
 # TODO: MAKE DOWNLOAD IT FROM AF=INET|I6NET
-input_data = file("DataIn/lenta.rss", "r", -1) # for now generating from local file [For now from Lenta.RU site]
+input_data = file("DataIn/lenta.rss", "r", -1) # for now generating from local file
+
 # TODO: USER GETTING INFORMATION FROM LOCAL WEBSERVER
 result = file("lenta.rss.html", "w") # for now generating to local file [With same contents as input]
 
 import re
-# FOR TODOs R#24 and R#26
-import urllib2
-import BaseHTTPServer
+
+# FOR TODOs R#25 and R#28
+# import urllib2
+# import BaseHTTPServer
 
 XML_DATA = input_data.readline()
 XML_ENCODING = re.findall(r".*?encoding=\"(?P<encode>.*?)\".*", XML_DATA)[0]
@@ -41,6 +44,18 @@ RSS_DATA = input_data.read()
 def CDATAUnpack(some_data):
 	return re.findall(r"<!\[CDATA\[(?P<CDATA>.*?)\]\]>", some_data, re.DOTALL)[0]
 
+
+def normalized(data):
+	normalize = data
+	for nop in range(0, 255, 1): normalize = re.sub("&lt;", "<", normalize, re.DOTALL)
+	for nop in range(0, 255, 1): normalize = re.sub("&gt;", ">", normalize, re.DOTALL)
+	for nop in range(0, 255, 1): normalize = re.sub("&#39;", "'", normalize, re.DOTALL)
+	for nop in range(0, 255, 1): normalize = re.sub("&nbsp;", "", normalize, re.DOTALL)
+	for nop in range(0, 255, 1): normalize = re.sub("&quot;", "\"", normalize, re.DOTALL)
+	for nop in range(0, 255, 1): normalize = re.sub("&amp;", "&", normalize, re.DOTALL)
+	return normalize
+
+
 try:
 	ch = re.findall(r".*?<channel.*?>(?P<channel>.*?)</channel>.*", RSS_DATA, re.DOTALL)[0]
 	print("RSS Detected!")
@@ -51,47 +66,9 @@ except IndexError:
 	print("ATOM Detected!")
 	RSS = False
 	ATOM = True
-_title = re.findall(r".*?<title>(?P<title>.*?)</title>(?P<aftT>.*?)", ch, re.DOTALL)
-RSS_title = _title[0][0]
-resgener = "<!DOCTYPE html>"\
-           "<html>"\
-           "<head>"\
-           "<title>" + RSS_title + "</title>"\
-                                   "<style>"\
-                                   "body { "\
-                                   "margin: 0; "\
-                                   "background: #AAAAAA; "\
-                                   "} "\
-                                   ".news_card { "\
-                                   "margin: 50px 25px; "\
-                                   "border: 1px; "\
-                                   "border-radius: 3px; "\
-                                   "border-style: solid; "\
-                                   "border-color: rgba(127, 127, 127, 0.75); "\
-                                   "background-color: #dfdfdf; "\
-                                   "box-shadow: 0px 0px 20px 10px rgba(128, 128, 128, 40); "\
-                                   "} "\
-                                   ".news-headline { "\
-                                   "font-family: serif; "\
-                                   "font-size: 2em; "\
-                                   "padding-left: 20px; "\
-                                   "text-align: justify;"\
-                                   "} "\
-                                   ".news-textline { "\
-                                   "font-family: serif; "\
-                                   "font-size: 1.5em; "\
-                                   "padding-left: 20px; "\
-                                   "text-align: justify;"\
-                                   "} "\
-                                   "img { "\
-                                   "height: calc(100% - 80px); "\
-                                   "width: calc(100% - 20px); "\
-                                   "box-shadow: 0px 0px 8px 2px rgba(128, 128, 128, 40); "\
-                                   "}"\
-                                   "</style>"\
-                                   "<meta charset=\"" + XML_ENCODING + "\"/>"\
-                                                                       "</head>"\
-                                                                       "<body>"
+_title = re.findall(r".*?<title>(?P<title>.*?)</title>(?P<aftT>.*?)", ch, re.DOTALL)[0][0]
+RSS_title = _title
+
 if RSS:
 	_items = re.findall(r"<item>(?P<title>.*?)</item>", ch, re.DOTALL)
 	_Entrys = None
@@ -100,103 +77,88 @@ if ATOM:
 	_Entrys = re.findall(r"<entry>(?P<title>.*?)</entry>", ch, re.DOTALL)
 
 try:
+	if _items is None and _Entrys is not None: raise Exception("RSS IS WRONG!")
+	newscards = ""
 	for item in _items:
-		rss_title = re.findall(r".*<title>(?P<this>.*?)</title>.*", item, re.DOTALL)
+		rss_title = re.findall(r".*<title>(?P<this>.*?)</title>.*", item, re.DOTALL)[0]
 		try:
-			ttl = CDATAUnpack(rss_title[0])
+			ttl = CDATAUnpack(rss_title)
 		except:
-			ttl = rss_title[0]
-		rss_link = re.findall(r".*<link>(?P<this>.*?)</link>.*", item, re.DOTALL)
-		resgener +=\
-			"<div class=\"news_card\">"\
-			"<table>"\
-			"<tr>"\
-			"<td>"\
-			"<table>"\
-			"<tr>"\
-			"<td class=\"news-headline\">"\
-			"<a href=\"" + rss_link[0] + "\">" + ttl + "</a>"\
-			                                           "</td>"\
-			                                           "</tr>"\
-			                                           "<tr>"\
-			                                           "<td class=\"news-textline\">"
-		rss_description = re.findall(r".*<description>(?P<this>.*?)</description>.*",
-		                             item,
-		                             re.DOTALL)
+			ttl = rss_title
+		rss_title = normalized(ttl)
+		rss_link = normalized(re.findall(r".*<link>(?P<this>.*?)</link>.*", item, re.DOTALL)[0])
+		rss_description = re.findall(r".*<description>(?P<this>.*?)</description>.*", item, re.DOTALL)[0]
 		try:
-			normalize = CDATAUnpack(rss_description[0])
+			rss_description = normalized(CDATAUnpack(rss_description))
 		except:
-			normalize = rss_description[0]
-		for nop in range(0, 255, 1): normalize = re.sub("&lt;", "<", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&gt;", ">", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&#39;", "'", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&nbsp;", "", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&quot;", "\"", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&amp;", "&", normalize, re.DOTALL)
-		resgener += normalize + "</td></tr></table></td>"
+			rss_description = normalized(rss_description)
 		try:
-			rss_enclosure_url = re.findall(r"<enclosure url=\"(?P<url>.*?)\" .*?/>", item, re.DOTALL)
-			resgener += "<td style=\" width:40%; \"><a href=\"" + rss_enclosure_url[0] + "\"><img src=\"" + rss_enclosure_url[0] + "\"/></a></td>"
+			rss_enclosure_url = re.findall(r"<enclosure url=\"(?P<url>.*?)\" .*?/>", item, re.DOTALL)[0]
+			rss_enclosure_data = rss_enclosure_url
 		except:
+			rss_enclosure_url = "#"
+			rss_enclosure_data = "Not available."
 			pass
-		resgener += "</tr>"\
-		            "</table>"\
-		            "</div>"
+		cards.seek(0)
+		newscards += cards.read()\
+			.format(
+			rss_link = rss_link,
+			ttl = rss_title,
+			rss_description = rss_description,
+			rss_enclosure_url = rss_enclosure_url,
+			rss_enclosure_data = rss_enclosure_data)
 except:
 	if RSS:
 		print("No Items")
 	pass
 
 try:
+	if _Entrys is None and _items is not None: raise Exception("ATOM IS WRONG!")
+	newscards = ""
 	for entry in _Entrys:
 		ATOM_title = re.findall(r".*<title>(?P<this>.*?)</title>.*", entry, re.DOTALL)
 		try:
 			ttl = CDATAUnpack(ATOM_title[0])
 		except:
 			ttl = ATOM_title[0]
-		rss_link = re.findall(r".*<link .*? href=\"(?P<this>.*?)\".*/>.*", entry, re.DOTALL)
-		resgener +=\
-			"<div class=\"news_card\">"\
-			"<table>"\
-			"<tr>"\
-			"<td>"\
-			"<table>"\
-			"<tr>"\
-			"<td class=\"news-headline\">"\
-			"<a href=\"" + rss_link[0] + "\">" + ttl + "</a>"\
-			                                           "</td>"\
-			                                           "</tr>"\
-			                                           "<tr>"\
-			                                           "<td class=\"news-textline\">"
-		rss_description = re.findall(r".*<summary.*?>(?P<this>.*?)</summary>.*",
-		                             entry,
-		                             re.DOTALL)
+		ATOM_title = normalized(ttl)
+		ATOM_link = normalized(re.findall(r".*<link .*? href=\"(?P<this>.*?)\".*/>.*", entry, re.DOTALL)[0])
+		ATOM_description = re.findall(r".*<summary.*?>(?P<this>.*?)</summary>.*",
+		                              entry,
+		                              re.DOTALL)[0]
 		try:
-			normalize = CDATAUnpack(rss_description[0])
+			ATOM_description = normalized(CDATAUnpack(ATOM_description))
 		except:
-			normalize = rss_description[0]
-		for nop in range(0, 255, 1): normalize = re.sub("&lt;", "<", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&gt;", ">", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&#39;", "'", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&nbsp;", "", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&quot;", "\"", normalize, re.DOTALL)
-		for nop in range(0, 255, 1): normalize = re.sub("&amp;", "&", normalize, re.DOTALL)
-		resgener += normalize + "</td></tr></table></td>"
+			ATOM_description = normalized(ATOM_description)
 		try:
-			rss_enclosure_url = re.findall(r"<image>(?P<url>.*?)</image>", entry, re.DOTALL)
-			resgener += "<td style=\" width:40%; \"><img src=\"" + rss_enclosure_url[0] + "\"/></td>"
+			ATOM_image_url = re.findall(r"<image>(?P<url>.*?)</image>", entry, re.DOTALL)[0]
+			ATOM_image = ATOM_image_url
 		except:
+			ATOM_image_url = ""
+			ATOM_image = "Not available."
 			pass
-		resgener += "</tr>"\
-		            "</table>"\
-		            "</div>"
-except Exception as x:
+		cards.seek(0)
+		newscards += cards.read()\
+			.format(
+			rss_link = ATOM_link,
+			ttl = ATOM_title,
+			rss_description = ATOM_description,
+			rss_enclosure_url = ATOM_image_url,
+			rss_enclosure_data = ATOM_image)
+except:
 	if ATOM:
-		print("No Entrys, {}".format(x))
+		print("No Entrys")
 	pass
 
-resgener += "</body>"\
-            "</html>"
+resgener = mainPage.read()\
+	.format(
+	title = RSS_title,
+	styleSheet = styleSheet.read(),
+	XML_ENCODING = XML_ENCODING,
+	newscards = newscards)
 
+styleSheet.close()
+cards.close()
+mainPage.close()
 result.write(resgener)
 result.close()
