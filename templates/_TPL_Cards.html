@@ -1,22 +1,18 @@
 <div class="news_card">
-	<table>
-		<tr>
+	<table style="width: 100%">
+		<tr class="news-headline">
 			<td>
-				<table>
-					<tr>
-						<td class="news-headline">
-							{% rss_title %}
-						</td>
-					</tr>
-					<tr>
-						<td class="news-textline">
-							{% rss_description %}
-						</td>
-					</tr>
-				</table>
+				<a href="{rss_link}">{ttl}</a>
 			</td>
+		</tr>
+		<tr class="news-textline">
 			<td>
-				<img src="{% rss_enclosure_url %}"/>
+				{rss_description}
+			</td>
+		</tr>
+		<tr class="enclosure">
+			<td style="padding-left: 20px;">
+				Enclosure: <a href="{rss_enclosure_url}">{rss_enclosure_data}</a>
 			</td>
 		</tr>
 	</table>
